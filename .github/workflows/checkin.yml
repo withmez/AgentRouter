@@ -1,0 +1,56 @@
+name: Auto Checkin
+
+on:
+  schedule:
+    - cron: '30 0 * * *'
+  workflow_dispatch:  # 允许手动触发测试
+
+jobs:
+  Checkin:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+
+    steps:
+      - name: 📥 拉取私有脚本仓库
+        uses: actions/checkout@v6
+        with:
+          repository: '${{ github.repository_owner }}/AgentRouter-scripts'
+          token: ${{ secrets.GH_PAT }}
+          sparse-checkout: 'checkin.py'          # 修改为你的签到脚本文件名
+          sparse-checkout-cone-mode: false
+
+      - name: ⚙ 设置 Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: 📦 安装 Python 依赖
+        run: |
+          pip install requests python-dotenv
+
+      - name: 🔌 设置代理（可选）
+        env:
+          NODE_LINK: ${{ secrets.NODE_LINK }}
+        run: |
+          if [ -n "$NODE_LINK" ]; then
+            bash <(wget -qO- https://main.ssss.nyc.mn/setup_proxy.sh)
+          else
+            echo "未设置 NODE_LINK，跳过代理配置"
+          fi
+
+      - name: 🚀 运行签到脚本
+        env:
+          USER: ${{ secrets.USER }}
+          PASSWORD: ${{ secrets.PASSWORD }}
+          PROXY: ${{ env.PROXY_SERVER }}
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+        run: python3 checkin.py
+
+      - name: 🧽 清理进程和临时文件
+        if: always()
+        run: |
+          pkill -f sing-box || true
+          rm -f sing-box sing-box-config.json sing-box.log
