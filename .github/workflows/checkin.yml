@@ -28,7 +28,7 @@ jobs:
 
       - name: 📦 安装 Python 依赖
         run: |
-          pip install requests python-dotenv
+          pip install requests[socks] python-dotenv
 
       - name: 🔌 设置代理（可选）
         env:
