@@ -1,4 +1,4 @@
-name: Auto Checkin
+name: Auto Checkin 
 
 on:
   schedule:
